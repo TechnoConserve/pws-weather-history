@@ -8,12 +8,14 @@ from tkinter import ttk
 
 
 class Application(ttk.Frame):
-    def __init__(self, master):
+    def __init__(self, master=None):
         super().__init__(master)
         self.grid(column=0, row=0, sticky=(N, W, E, S))
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
+        self.create_widgets()
 
+    def create_widgets(self):
         station_code = StringVar()
 
         station_code_entry = ttk.Entry(self, width=7, textvariable=station_code)
@@ -153,11 +155,8 @@ def parse_today():
 
 
 if __name__ == '__main__':
-    #grab_history()
-
     root = Tk()
     root.title('Get Weather History')
     app = Application(master=root)
-
     root.bind('<Return>', grab_history())
     root.mainloop()
