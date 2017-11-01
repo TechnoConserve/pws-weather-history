@@ -7,24 +7,26 @@ from tkinter import *
 from tkinter import ttk
 
 
-class Application(Frame):
-    def __init__(self, master=None):
+class Application(ttk.Frame):
+    def __init__(self, master):
         super().__init__(master)
-        self.pack()
-        self.create_widgets()
+        self.grid(column=0, row=0, sticky=(N, W, E, S))
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
 
-    def create_widgets(self):
-        self.hi_there = Button(self)
-        self.hi_there['text'] = 'Hello World\n(click me)'
-        self.hi_there['command'] = self.say_hi
-        self.hi_there.pack(side='top')
+        station_code = StringVar()
 
-        self.quit = Button(self, text='QUIT', fg='red', command=root.destroy)
+        station_code_entry = ttk.Entry(self, width=7, textvariable=station_code)
+        station_code_entry.grid(column=2, row=1, sticky=(W, E))
 
-        self.quit.pack(side='bottom')
+        ttk.Button(self, text="Download Data", command=grab_history).grid(column=3, row=3, sticky=W)
 
-    def say_hi(self):
-        print('Hi there, everyone!')
+        ttk.Label(self, text="Station Code").grid(column=3, row=1, sticky=W)
+
+        for child in self.winfo_children():
+            child.grid_configure(padx=5, pady=5)
+
+        station_code_entry.focus()
 
 
 def grab_history():
@@ -154,6 +156,8 @@ if __name__ == '__main__':
     #grab_history()
 
     root = Tk()
-    root.title("Get Weather History")
+    root.title('Get Weather History')
     app = Application(master=root)
-    app.mainloop()
+
+    root.bind('<Return>', grab_history())
+    root.mainloop()
