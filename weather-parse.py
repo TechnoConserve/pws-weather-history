@@ -1,4 +1,13 @@
+"""
+    This application was written by Avery Uslaner to assist Red Butte
+    Garden with downloading weather data collected by a
+    wunderground.com compatible home weather station.
+
+    The station code for this RBG weather station is: KAZLITTL3
+    It was installed on 10/13/2016
+"""
 from datetime import date
+import json
 import xml.etree.ElementTree as ET
 import tkinter as tk
 
@@ -20,61 +29,109 @@ class Application(tk.Frame):
         self.end_date = {}
 
         self.day_start = tk.Button(
-            self, text="Choose",
+            self, text='Choose',
             command=lambda: self.datepicker(side='start')).grid(column=2, row=1, sticky=(tk.W, tk.E))
         self.day_end = tk.Button(
-            self, text="Choose",
+            self, text='Choose',
             command=lambda: self.datepicker(side='end')).grid(column=2, row=2, sticky=(tk.W, tk.E))
 
         self.station_code_entry = tk.Entry(self, width=7, textvariable=self.station_code)
         self.station_code_entry.grid(column=2, row=3, sticky=(tk.W, tk.E))
 
+        self.save_defaults = tk.Button(
+            self, text='Save selected values', command=self.save_values).grid(column=1, row=4, sticky=tk.E)
         self.download = tk.Button(
-            self, text="Download Data", command=self.grab_history).grid(column=3, row=4, sticky=tk.W)
+            self, text='Download Data', command=self.grab_history).grid(column=3, row=4, sticky=tk.W)
         #self.show_btn = tk.Button(self, text='Dump data', command=self.dump_data)
 
-        tk.Label(self, text="Station Code").grid(column=3, row=3, sticky=tk.W)
-        tk.Label(self, text="Start Date").grid(column=1, row=1, sticky=tk.E)
-        tk.Label(self, text="End Date").grid(column=1, row=2, sticky=tk.E)
+        tk.Label(self, text='Station Code').grid(column=3, row=3, sticky=tk.W)
+        tk.Label(self, text='Start Date').grid(column=1, row=1, sticky=tk.E)
+        tk.Label(self, text='End Date').grid(column=1, row=2, sticky=tk.E)
+        tk.Label(self, text='(defaults to today)').grid(column=3, row=2, sticky=tk.W)
 
         for child in self.winfo_children():
             child.grid_configure(padx=5, pady=5)
 
         self.station_code_entry.focus()
 
+    def alert(self, message):
+        child = tk.Toplevel()
+        child.wm_title('Alert!')
+        msg = tk.Message(child, text=message)
+        msg.pack()
+        button = tk.Button(child, text='Dismiss', command=child.destroy)
+        button.pack()
+
     def datepicker(self, side):
         """
-        Lauch a child window with a calendar widget.
+        Launch a child window with a calendar widget.
         :param side: Specifies if the child window is recording a start
         or end date.
         """
         child = tk.Toplevel()
-        child.wm_title("Choose date")
+        child.wm_title('Choose date')
         if side == 'start':
             Calendar(child, values=self.start_date)
         else:
             Calendar(child, values=self.end_date)
 
     def dump_data(self):
-        print("Start date:", self.start_date)
-        print("End date:", self.end_date)
+        print('Start date:', self.start_date)
+        print('End date:', self.end_date)
 
     def grab_history(self):
-        day, month, year = date.today().strftime('%d %m %Y').split(' ')
+        if len(self.start_date) == 0:
+            message = "No start date selected! Can't download data."
+            self.alert(message)
+            return
+        else:
+            start_day = str(self.start_date['day_selected'])
+            start_month = str(self.start_date['month_selected'])
+            start_year = str(self.start_date['year_selected'])
+
+        if len(self.end_date) == 0:
+            end_day, end_month, end_year = date.today().strftime('%d %m %Y').split(' ')
+        else:
+            end_day = str(self.end_date['day_selected'])
+            end_month = str(self.end_date['month_selected'])
+            end_year = str(self.end_date['year_selected'])
+
         station_id = self.station_code_entry.get()
         url = 'https://www.wunderground.com/weatherstation/WXDailyHistory.asp?' \
-              'ID=' + station_id + '=13&month=10&year=2016&' \
-              'dayend=' + day + '&monthend=' + month + '&yearend=' + year + \
+              'ID=' + station_id + '&day=' + start_day + '&month=' + start_month + '&year=' + start_year + \
+              'dayend=' + end_day + '&monthend=' + end_month + '&yearend=' + end_year + \
               '&graphspan=custom&format=1'
         df = pd.read_csv(url, header=0, index_col=0)
         df.rename(columns={'PrecipitationSumIn<br>': 'Precipitation Sum (in)'}, inplace=True)
         df = df[df.index != '<br>']
-        df.to_csv('updated-' + day + '-' + month + '-' + year + '-blackrock-weather.csv')
+        df.to_csv('updated-' + end_day + '-' + end_month + '-' + end_year + '-blackrock-weather.csv')
+
+    def save_values(self):
+        """
+        Saves the currently selected dates and station ID to a config
+        file.
+        """
+        data = {'station': [], 'start': [], 'end': []}
+        data['station'].append({
+            'station_id': self.station_code_entry.get()
+        })
+        data['start'].append({
+            'start_day': self.start_date['day_selected'],
+            'start_month': self.start_date['month_selected'],
+            'start_year': self.start_date['year_selected']
+        })
+        data['end'].append({
+            'end_day': self.end_date['day_selected'],
+            'end_month': self.end_date['month_selected'],
+            'end_year': self.end_date['year_selected']
+        })
+        with open('default.cfg', 'w+') as outfile:
+            json.dump(data, outfile)
 
 
 def parse_today():
     tree = ET.parse('WXDailyHistory.xml')
-    root = tree.getroot()
+    tree_root = tree.getroot()
 
     wb = openpyxl.Workbook()
     sheet = wb.active
@@ -111,7 +168,7 @@ def parse_today():
     sheet['AD1'] = 'Precipitation Today (in)'
     sheet['AE1'] = 'Precipitation Today (mm)'
 
-    for idx, observation in enumerate(root):
+    for idx, observation in enumerate(tree_root):
         observation_time = observation.find('observation_time').text
 
         location = observation.find('location')
