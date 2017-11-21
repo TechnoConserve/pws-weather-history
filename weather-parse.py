@@ -1,8 +1,6 @@
-import calendar
 from datetime import date
 import xml.etree.ElementTree as ET
-from tkinter import *
-from tkinter import ttk
+import tkinter as tk
 
 import openpyxl
 import pandas as pd
@@ -10,40 +8,68 @@ import pandas as pd
 from calendar_widget import Calendar
 
 
-class Application(ttk.Frame):
+class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
-        self.grid(column=0, row=0, sticky=(N, W, E, S))
+        self.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
 
-        self.station_code = StringVar()
-        self.day_start = Calendar(firstweekday=calendar.SUNDAY)
-        self.day_start.grid(column=1, row=1, sticky=(W, E))
+        self.station_code = tk.StringVar()
+        self.start_date = {}
+        self.end_date = {}
 
-        self.station_code_entry = ttk.Entry(self, width=7, textvariable=self.station_code)
-        self.station_code_entry.grid(column=2, row=1, sticky=(W, E))
+        self.day_start = tk.Button(
+            self, text="Choose",
+            command=lambda: self.datepicker(side='start')).grid(column=2, row=1, sticky=(tk.W, tk.E))
+        self.day_end = tk.Button(
+            self, text="Choose",
+            command=lambda: self.datepicker(side='end')).grid(column=2, row=2, sticky=(tk.W, tk.E))
 
-        self.download = ttk.Button(self, text="Download Data", command=grab_history).grid(column=3, row=3, sticky=W)
+        self.station_code_entry = tk.Entry(self, width=7, textvariable=self.station_code)
+        self.station_code_entry.grid(column=2, row=3, sticky=(tk.W, tk.E))
 
-        ttk.Label(self, text="Station Code").grid(column=3, row=1, sticky=W)
+        self.download = tk.Button(
+            self, text="Download Data", command=self.grab_history).grid(column=3, row=4, sticky=tk.W)
+        #self.show_btn = tk.Button(self, text='Dump data', command=self.dump_data)
+
+        tk.Label(self, text="Station Code").grid(column=3, row=3, sticky=tk.W)
+        tk.Label(self, text="Start Date").grid(column=1, row=1, sticky=tk.E)
+        tk.Label(self, text="End Date").grid(column=1, row=2, sticky=tk.E)
 
         for child in self.winfo_children():
             child.grid_configure(padx=5, pady=5)
 
         self.station_code_entry.focus()
 
+    def datepicker(self, side):
+        """
+        Lauch a child window with a calendar widget.
+        :param side: Specifies if the child window is recording a start
+        or end date.
+        """
+        child = tk.Toplevel()
+        child.wm_title("Choose date")
+        if side == 'start':
+            Calendar(child, values=self.start_date)
+        else:
+            Calendar(child, values=self.end_date)
 
-def grab_history():
-    day, month, year = date.today().strftime('%d %m %Y').split(' ')
-    url = 'https://www.wunderground.com/weatherstation/WXDailyHistory.asp?' \
-          'ID=KAZLITTL3&day=13&month=10&year=2016&' \
-          'dayend=' + day + '&monthend=' + month + '&yearend=' + year + \
-          '&graphspan=custom&format=1'
-    df = pd.read_csv(url, header=0, index_col=0)
-    df.rename(columns={'PrecipitationSumIn<br>': 'Precipitation Sum (in)'}, inplace=True)
-    df = df[df.index != '<br>']
-    df.to_csv('updated-' + day + '-' + month + '-' + year + 'blackrock-weather.csv')
+    def dump_data(self):
+        print("Start date:", self.start_date)
+        print("End date:", self.end_date)
+
+    def grab_history(self):
+        day, month, year = date.today().strftime('%d %m %Y').split(' ')
+        station_id = self.station_code_entry.get()
+        url = 'https://www.wunderground.com/weatherstation/WXDailyHistory.asp?' \
+              'ID=' + station_id + '=13&month=10&year=2016&' \
+              'dayend=' + day + '&monthend=' + month + '&yearend=' + year + \
+              '&graphspan=custom&format=1'
+        df = pd.read_csv(url, header=0, index_col=0)
+        df.rename(columns={'PrecipitationSumIn<br>': 'Precipitation Sum (in)'}, inplace=True)
+        df = df[df.index != '<br>']
+        df.to_csv('updated-' + day + '-' + month + '-' + year + '-blackrock-weather.csv')
 
 
 def parse_today():
@@ -158,8 +184,7 @@ def parse_today():
 
 
 if __name__ == '__main__':
-    root = Tk()
+    root = tk.Tk()
     root.title('Get Weather History')
     app = Application(master=root)
-    root.bind('<Return>', grab_history())
     root.mainloop()
