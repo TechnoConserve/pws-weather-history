@@ -104,7 +104,7 @@ class Application(tk.Frame):
         station_id = self.station_code_entry.get()
         url = 'https://www.wunderground.com/weatherstation/WXDailyHistory.asp?' \
               'ID=' + station_id + '&day=' + start_day + '&month=' + start_month + '&year=' + start_year + \
-              'dayend=' + end_day + '&monthend=' + end_month + '&yearend=' + end_year + \
+              '&dayend=' + end_day + '&monthend=' + end_month + '&yearend=' + end_year + \
               '&graphspan=custom&format=1'
         df = pd.read_csv(url, header=0, index_col=0)
         df.rename(columns={'PrecipitationSumIn<br>': 'Precipitation Sum (in)'}, inplace=True)
