@@ -111,6 +111,9 @@ class Application(tk.Frame):
         df = df[df.index != '<br>']
         df.to_csv('updated-' + end_day + '-' + end_month + '-' + end_year + '-blackrock-weather.csv')
 
+        message = 'Downloaded data to csv!'
+        self.alert(message)
+
     def read_values(self):
         """
         Reads default values from file if they exist.
