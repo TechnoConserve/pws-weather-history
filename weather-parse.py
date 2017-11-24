@@ -28,6 +28,8 @@ class Application(tk.Frame):
         self.start_date = {}
         self.end_date = {}
 
+        self.read_values()
+
         self.day_start = tk.Button(
             self, text='Choose',
             command=lambda: self.datepicker(side='start')).grid(column=2, row=1, sticky=(tk.W, tk.E))
@@ -106,27 +108,46 @@ class Application(tk.Frame):
         df = df[df.index != '<br>']
         df.to_csv('updated-' + end_day + '-' + end_month + '-' + end_year + '-blackrock-weather.csv')
 
+    def read_values(self):
+        """
+        Reads default values from file if they exist.
+        """
+        try:
+            with open('default.cfg') as infile:
+                data = json.load(infile)
+                self.station_code_entry.insert(0, data['station']['station_id'])
+
+                self.start_date['day_selected'] = data['start']['start_day']
+                self.start_date['month_selected'] = data['start']['start_month']
+                self.start_date['year_selected'] = data['start']['start_year']
+
+                self.end_date['day_selected'] = data['end']['end_day']
+                self.end_date['month_selected'] = data['end']['end_month']
+                self.end_date['year_selected'] = data['end']['end_year']
+        except FileNotFoundError:
+            print('No default file found.')
+
     def save_values(self):
         """
         Saves the currently selected dates and station ID to a config
         file.
         """
-        data = {'station': [], 'start': [], 'end': []}
-        data['station'].append({
-            'station_id': self.station_code_entry.get()
-        })
-        data['start'].append({
-            'start_day': self.start_date['day_selected'],
-            'start_month': self.start_date['month_selected'],
-            'start_year': self.start_date['year_selected']
-        })
-        data['end'].append({
-            'end_day': self.end_date['day_selected'],
-            'end_month': self.end_date['month_selected'],
-            'end_year': self.end_date['year_selected']
-        })
+        data = {
+            'station': {
+                'station_id': self.station_code_entry.get()
+            }, 'start': {
+                'start_day': self.start_date['day_selected'],
+                'start_month': self.start_date['month_selected'],
+                'start_year': self.start_date['year_selected']
+            }, 'end': {
+                'end_day': self.end_date['day_selected'],
+                'end_month': self.end_date['month_selected'],
+                'end_year': self.end_date['year_selected']
+            }}
         with open('default.cfg', 'w+') as outfile:
             json.dump(data, outfile)
+            message = "Selected values saved to file!"
+            self.alert(message)
 
 
 def parse_today():

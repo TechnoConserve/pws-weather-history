@@ -2,6 +2,8 @@ import calendar
 import datetime
 import tkinter as tk
 
+calendar.setfirstweekday(calendar.SUNDAY)
+
 
 class Calendar:
     def __init__(self, parent, values):
@@ -45,7 +47,8 @@ class Calendar:
         self.clear()
         self.setup(self.year, self.month)
 
-    def selection(self, day, name):
+    def selection(self, day, d):
+        name = calendar.day_name[d - 1]
         self.day_selected = day
         self.month_selected = self.month
         self.year_selected = self.year
@@ -83,9 +86,8 @@ class Calendar:
         for w, week in enumerate(self.cal.monthdayscalendar(y, m), 2):
             for d, day in enumerate(week):
                 if day:
-                    # print(calendar.day_name[day])
                     b = tk.Button(self.parent, width=1, text=day,
-                                  command=lambda day=day: self.selection(day, calendar.day_name[(day - 1) % 7]))
+                                  command=lambda day=day, d=d: self.selection(day, d))
                     self.wid.append(b)
                     b.grid(row=w, column=d)
 
