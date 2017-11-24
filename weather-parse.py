@@ -34,8 +34,6 @@ class Application(tk.Frame):
         self.end_date['month_selected'] = end_month
         self.end_date['year_selected'] = end_year
 
-        self.read_values()
-
         self.day_start = tk.Button(
             self, text='Choose',
             command=lambda: self.datepicker(side='start')).grid(column=2, row=1, sticky=(tk.W, tk.E))
@@ -45,6 +43,8 @@ class Application(tk.Frame):
 
         self.station_code_entry = tk.Entry(self, width=7, textvariable=self.station_code)
         self.station_code_entry.grid(column=2, row=3, sticky=(tk.W, tk.E))
+
+        self.read_values()
 
         self.save_defaults = tk.Button(
             self, text='Save selected values', command=self.save_values).grid(column=1, row=4, sticky=tk.E)
