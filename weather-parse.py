@@ -28,6 +28,12 @@ class Application(tk.Frame):
         self.start_date = {}
         self.end_date = {}
 
+        # Set default end date to today's date
+        end_day, end_month, end_year = date.today().strftime('%d %m %Y').split(' ')
+        self.end_date['day_selected'] = end_day
+        self.end_date['month_selected'] = end_month
+        self.end_date['year_selected'] = end_year
+
         self.read_values()
 
         self.day_start = tk.Button(
@@ -91,12 +97,9 @@ class Application(tk.Frame):
             start_month = str(self.start_date['month_selected'])
             start_year = str(self.start_date['year_selected'])
 
-        if len(self.end_date) == 0:
-            end_day, end_month, end_year = date.today().strftime('%d %m %Y').split(' ')
-        else:
-            end_day = str(self.end_date['day_selected'])
-            end_month = str(self.end_date['month_selected'])
-            end_year = str(self.end_date['year_selected'])
+        end_day = str(self.end_date['day_selected'])
+        end_month = str(self.end_date['month_selected'])
+        end_year = str(self.end_date['year_selected'])
 
         station_id = self.station_code_entry.get()
         url = 'https://www.wunderground.com/weatherstation/WXDailyHistory.asp?' \
